@@ -24,6 +24,8 @@ const stagger: Variants = {
   visible: { transition: { staggerChildren: 0.12 } },
 };
 
+const GITHUB_PLACEHOLDER = "https://github.com/haryshwa05";
+
 const sectionReveal: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: "easeOut" as const } },
@@ -34,7 +36,8 @@ function formatDate(d: string) {
 }
 
 export default function LandingClient({ blogs }: Props) {
-  const featuredProjects = projects.filter((p) => p.featured);
+  const homepageProjects = projects.slice(0, 4);
+  const year = new Date().getFullYear();
   const services = [
     {
       title: "AI workflow automation for businesses",
@@ -178,13 +181,19 @@ export default function LandingClient({ blogs }: Props) {
             <h2 className="neo-title" style={{ fontSize: "clamp(1.7rem, 4vw, 2.8rem)", lineHeight: undefined}}>
               Who I am
             </h2>
+            <p style={{ fontSize: "0.88rem", lineHeight: 1.65, color: "var(--text-soft)", margin: "0.65rem 0 0", maxWidth: "28ch" }}>
+              A quick snapshot of what I build, study, and care about.
+            </p>
           </div>
-          <div className="neo-card" style={{ padding: "1.2rem" }}>
-            {personal.bio.map((line) => (
-              <p key={line} style={{ fontSize: "0.9rem", lineHeight: 1.75, marginTop: "0.8rem", color: "var(--text-soft)" }}>
-                {line}
-              </p>
-            ))}
+          <div className="neo-card" style={{ padding: "1.45rem", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "5px", background: "var(--accent-2)" }} />
+            <div style={{ maxWidth: "78ch", marginLeft: "0.45rem" }}>
+              {personal.bio.map((line, index) => (
+                <p key={line} style={{ fontSize: index === 0 ? "1rem" : "0.96rem", lineHeight: 1.85, margin: index === 0 ? "0" : "1rem 0 0", color: "var(--text-soft)" }}>
+                  {line}
+                </p>
+              ))}
+            </div>
           </div>
         </div>
       </motion.section>
@@ -253,14 +262,31 @@ export default function LandingClient({ blogs }: Props) {
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
         >
-          {featuredProjects.map((project) => (
+          {homepageProjects.map((project) => (
             <motion.article
               key={project.name}
               variants={fadeUp}
               className="neo-card hover-card"
               style={{ padding: "1rem" }}
             >
-              <p className="neo-kicker" style={{ color: "var(--accent-2)", margin: 0 }}>{project.year}</p>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.6rem", flexWrap: "wrap" }}>
+                <p className="neo-kicker" style={{ color: "var(--accent-2)", margin: 0 }}>{project.year}</p>
+                <span
+                  style={{
+                    border: "2px solid var(--line)",
+                    background: project.status === "building" ? "var(--accent-3)" : "var(--surface-alt)",
+                    color: project.status === "building" ? "var(--text-inverse)" : "var(--text)",
+                    padding: "0.18rem 0.5rem",
+                    fontFamily: "var(--font-syne)",
+                    fontSize: "0.6rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {project.status === "building" ? "Currently Building" : "Built"}
+                </span>
+              </div>
               <h3 className="neo-title" style={{ fontSize: "1.3rem", margin: "0.5rem 0", lineHeight: undefined}}>{project.name}</h3>
               <p style={{ fontSize: "0.84rem", lineHeight: 1.75, color: "var(--text-soft)" }}>{project.description}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", marginTop: "0.8rem" }}>
@@ -271,7 +297,15 @@ export default function LandingClient({ blogs }: Props) {
                 ))}
               </div>
               <div style={{ marginTop: "0.9rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                {project.github && <a className="neo-btn neo-btn-secondary" href={project.github} target="_blank" rel="noopener noreferrer">Code</a>}
+                <a
+                  className="neo-btn neo-btn-secondary"
+                  href={project.github || GITHUB_PLACEHOLDER}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${project.name} GitHub repository`}
+                >
+                  <GithubIcon size={15} /> GitHub
+                </a>
                 {project.live   && <a className="neo-btn neo-btn-secondary" href={project.live}   target="_blank" rel="noopener noreferrer">Live <ExternalLink size={14} /></a>}
               </div>
             </motion.article>
@@ -535,21 +569,32 @@ export default function LandingClient({ blogs }: Props) {
         viewport={{ once: true, margin: "-60px" }}
       >
         <div className="neo-grid contact-grid">
-          <div className="neo-card" style={{ padding: "1.5rem" }}>
+          <div
+            className="neo-card"
+            style={{
+              padding: "1.5rem",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
             <SectionLabel>Contact</SectionLabel>
             <h2 className="neo-title" style={{ fontSize: "clamp(1.9rem, 5vw, 3.2rem)", margin: "0.4rem 0 0.7rem", lineHeight: 1.06 }}>
               Let&apos;s build something.
             </h2>
-            <p style={{ fontSize: "0.9rem", lineHeight: 1.7, color: "var(--text-soft)", maxWidth: "56ch" }}>
-              Looking for software engineering, AI/ML roles, and meaningful collaborations.
-            </p>
-            <p style={{ fontSize: "0.88rem", lineHeight: 1.7, color: "var(--text-soft)", marginTop: "1rem" }}>
-              If you want to talk about a role, a product idea, or an AI system for your business, send the details here and I&apos;ll get back to you.
-            </p>
+            <div>
+              <p style={{ fontSize: "0.9rem", lineHeight: 1.7, color: "var(--text-soft)", maxWidth: "56ch" }}>
+                Looking for software engineering, AI/ML roles, and meaningful collaborations.
+              </p>
+              <p style={{ fontSize: "0.88rem", lineHeight: 1.7, color: "var(--text-soft)", marginTop: "1rem" }}>
+                If you want to talk about a role, a product idea, or an AI system for your business, send the details here and I&apos;ll get back to you.
+              </p>
+            </div>
             <a
               href={social.email}
               className="neo-btn neo-btn-secondary"
-              style={{ marginTop: "1rem", fontFamily: "var(--font-dm-mono), monospace", fontWeight: 500, letterSpacing: "0.01em", textTransform: "none", fontSize: "0.95rem" }}
+              style={{ marginTop: "1rem", alignSelf: "flex-start", fontFamily: "var(--font-dm-mono), monospace", fontWeight: 500, letterSpacing: "0.01em", textTransform: "none", fontSize: "0.95rem" }}
             >
               {personal.email}
             </a>
@@ -635,6 +680,50 @@ export default function LandingClient({ blogs }: Props) {
           </motion.form>
         </div>
       </motion.section>
+
+      <section className="site-wrap" style={{ padding: "0 1rem 2.5rem" }}>
+        <div
+          className="neo-card"
+          style={{
+            padding: "0.85rem 1rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.75rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-dm-mono)",
+              fontSize: "0.76rem",
+              color: "var(--text-soft)",
+              lineHeight: 1.7,
+            }}
+          >
+            © {year} {personal.name}. All rights reserved.
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+            <a
+              href={social.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="neo-btn neo-btn-secondary"
+              style={{ padding: "0.45rem 0.7rem", fontSize: "0.75rem" }}
+            >
+              LinkedIn
+            </a>
+            <a
+              href={social.email}
+              className="neo-btn neo-btn-secondary"
+              style={{ padding: "0.45rem 0.7rem", fontSize: "0.75rem", textTransform: "none" }}
+            >
+              {personal.email}
+            </a>
+          </div>
+        </div>
+      </section>
 
       <style>{`
         @media (min-width: 880px) {

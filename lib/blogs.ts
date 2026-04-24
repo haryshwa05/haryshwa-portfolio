@@ -10,7 +10,7 @@ export interface BlogFrontmatter {
   tag: string;
   accentColor: string;
   layout: "technical" | "caseStudy";
-  status?: string;
+  status?: "draft" | "published" | string;
 }
 
 export interface BlogPost {
@@ -58,7 +58,11 @@ export function getAllBlogSlugs(): string[] {
   return fs
     .readdirSync(BLOGS_DIR)
     .filter((f) => f.endsWith(".mdx"))
-    .map((f) => f.replace(/\.mdx$/, ""));
+    .map((f) => f.replace(/\.mdx$/, ""))
+    .filter((slug) => {
+      const post = getBlogBySlug(slug);
+      return post ? !isDraft(post) : false;
+    });
 }
 
 export function getBlogBySlug(slug: string): BlogPost | null {
@@ -89,4 +93,8 @@ export function getAllBlogs(): BlogMeta[] {
       (a, b) =>
         new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime()
     );
+}
+
+export function isDraft(post: BlogPost): boolean {
+  return post.frontmatter.status?.toLowerCase() === "draft";
 }

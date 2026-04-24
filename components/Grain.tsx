@@ -10,6 +10,7 @@ export default function Grain() {
         opacity: 0.12,
         backgroundImage: "radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0)",
         backgroundSize: "18px 18px",
+        contain: "paint",
       }}
     />
   );

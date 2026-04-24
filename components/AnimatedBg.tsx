@@ -25,6 +25,8 @@ export default function AnimatedBg() {
           backgroundImage:
             "linear-gradient(var(--bg-pattern) 1px, transparent 1px), linear-gradient(90deg, var(--bg-pattern) 1px, transparent 1px)",
           backgroundSize: "24px 24px",
+          willChange: "transform",
+          transform: "translateZ(0)",
         }}
         animate={{ x: [0, 24], y: [0, 24] }}
         transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
@@ -36,6 +38,8 @@ export default function AnimatedBg() {
           inset: "-12%",
           background:
             "radial-gradient(circle at 18% 24%, rgba(255,77,0,0.08), transparent 24%), radial-gradient(circle at 80% 18%, rgba(0,87,255,0.08), transparent 22%), radial-gradient(circle at 62% 72%, rgba(30,175,65,0.06), transparent 20%)",
+          willChange: "transform",
+          transform: "translateZ(0)",
         }}
         animate={{ x: [0, 18, -12, 0], y: [0, -16, 14, 0] }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}

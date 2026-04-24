@@ -5,6 +5,9 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { projects } from "@/data/content";
 import SectionLabel from "@/components/SectionLabel";
+import { GithubIcon } from "@/components/icons";
+
+const GITHUB_PLACEHOLDER = "https://github.com/haryshwa05";
 
 function Tag({ children, active, onClick }: { children: string; active?: boolean; onClick?: () => void }) {
   return (
@@ -79,7 +82,24 @@ export default function ProjectsClient() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1rem" }} className="proj-grid">
         {filtered.map((project) => (
           <article key={project.name} className="neo-card" style={{ padding: "1rem" }}>
-            <p className="neo-kicker" style={{ color: "var(--accent-2)", margin: 0 }}>{project.year} {project.featured ? "· FEATURED" : ""}</p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
+              <p className="neo-kicker" style={{ color: "var(--accent-2)", margin: 0 }}>{project.year} {project.featured ? "· FEATURED" : ""}</p>
+              <span
+                style={{
+                  border: "2px solid var(--line)",
+                  background: project.status === "building" ? "var(--accent-3)" : "var(--surface-alt)",
+                  color: project.status === "building" ? "var(--text-inverse)" : "var(--text)",
+                  padding: "0.2rem 0.55rem",
+                  fontFamily: "var(--font-syne)",
+                  fontSize: "0.62rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {project.status === "building" ? "Currently Building" : "Built"}
+              </span>
+            </div>
             <h2 className="neo-title" style={{ fontSize: "1.3rem", margin: "0.4rem 0" }}>{project.name}</h2>
             <p style={{ fontSize: "0.84rem", lineHeight: 1.7, color: "var(--text-soft)" }}>{project.description}</p>
             <div
@@ -116,16 +136,15 @@ export default function ProjectsClient() {
                 </div>
 
                 <div style={{ display: "flex", gap: "0.5rem" }}>
-                  {project.github && (
-                    <a
-                      href={project.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="neo-btn neo-btn-secondary"
-                    >
-                      Code
-                    </a>
-                  )}
+                  <a
+                    href={project.github || GITHUB_PLACEHOLDER}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="neo-btn neo-btn-secondary"
+                    aria-label={`${project.name} GitHub repository`}
+                  >
+                    <GithubIcon size={15} /> GitHub
+                  </a>
                   {project.live && (
                     <a
                       href={project.live}

@@ -6,53 +6,39 @@
 export const personal = {
   name: "Haryshwa Ganesh",
   firstName: "Haryshwa",
-  title: "AI Engineer & Builder",
-  tagline: "I build AI systems that save businesses real time and real money.",
+  title: "AI Engineer & Product Builder",
+  tagline: "I build AI systems that solve real problems — from research papers to production products.",
   bio: [
     "3rd year CS student at SRM University — but most of what matters has happened outside the classroom. I build production AI systems: RAG pipelines, agentic architectures, computer vision models, and the full-stack applications that make them usable.",
-    "Currently shipping Voyder, an AI-powered vendor reconciliation platform for freight forwarding companies that turns a 2-hour manual process into 2 minutes. Also building a chess education platform and doing medical AI research with SIMS Hospital. I work with businesses that want AI to actually solve a problem, not just sound impressive.",
+    "Currently building RAG-based knowledge infrastructure at Levarus Solutions and shipping Voyder, an AI-powered vendor reconciliation platform for freight forwarding companies. On the research side, I've published work on medical image segmentation and spectral inference in deep learning.",
   ],
   location: "Chennai, India",
   email: "haryshwa198@gmail.com",
-  availability: "Taking on select projects",
+  availability: "Open to the right projects",
 }
 
 export const social = {
   github: "https://github.com/haryshwa05",
-  linkedin: "https://linkedin.com/in/haryshwa",
+  linkedin: "https://www.linkedin.com/in/haryshwa-ganesh-7a771027b/",
   twitter: "",
   email: "mailto:haryshwa198@gmail.com",
 }
 
 export const workExperience = [
   {
-    company: "Voyder",
-    role: "Co-Founder & Technical Lead",
-    period: "2026 — Present",
-    location: "Chennai, India",
-    description: "Building an AI-powered SOA reconciliation platform for freight forwarding and logistics companies.",
-    bullets: [
-      "Architecting the full product: React/Next.js frontend, FastAPI backend, PostgreSQL, and Claude API integration for unstructured document extraction",
-      "Built a 4-pass invoice matching engine that handles direct matches, fuzzy matching, BT dump lookups, and company-only reconciliation — producing output in the exact Excel format clients already use",
-      "Designing AI extraction pipeline that parses vendor statements from any format (PDF, Excel, scanned images, email text) with >95% target accuracy",
-    ],
-    tags: ["Python", "FastAPI", "Next.js", "Claude API", "PostgreSQL", "pandas", "openpyxl"],
-    link: "",
-  },
-  {
-    company: "Levarus Solutions Pvt Ltd",
-    role: "Software Engineer Intern",
-    period: "June 2025 — Present",
-    location: "Chennai, India",
-    description: "Building AI-powered internal tooling and data infrastructure for enterprise clients.",
-    bullets: [
-      "Building an internal RAG system end-to-end — chunking strategies, vector retrieval, reranking, and LLM response synthesis — enabling contextual access across company files and databases",
-      "Building a data integration platform using Apache Camel, supporting backend services for reliable data flow across internal systems",
-      "Working with Oracle DB in banking workflows — SQL/PL-SQL, indexing, performance monitoring, and transactional data reliability",
-    ],
-    tags: ["Python", "RAG", "Apache Camel", "Oracle DB", "FastAPI", "SQL"],
-    link: "",
-  },
+  company: "Levarus Solutions Pvt Ltd",
+  role: "Software Engineer Intern",
+  period: "June 2025 — Present",
+  location: "Chennai, India",
+  description: "Building production AI systems and data infrastructure for enterprise clients.",
+  bullets: [
+    "Building an internal RAG system end-to-end — document ingestion, chunking strategies, vector retrieval, reranking, and LLM response synthesis over company files and databases",
+    "Working with Oracle DB in banking workflows — SQL/PL-SQL, indexing, performance monitoring, and transactional data reliability at production scale",
+    "Optimizing query performance and data access patterns to support AI retrieval pipelines in a high-reliability banking environment",
+  ],
+  tags: ["Python", "RAG", "LangChain", "Oracle DB", "FastAPI", "SQL", "Vector Search"],
+  link: "",
+},
   {
     company: "Freelance",
     role: "AI & Full-Stack Developer",
@@ -71,56 +57,110 @@ export const workExperience = [
 
 export const research = [
   {
-    title: "X-ray Coronary Angiography (XCA) Image Analysis",
-    venue: "Collaboration with SIMS Hospital, Chennai",
-    period: "2025 — Ongoing",
+    title: "FreqLoRA-SAM: A Visual Prompt-Driven Interactive Segmentation Model for Detecting Colorectal Cancer",
+    venue: "SRM Institute of Science and Technology · NIT Rourkela · Jadavpur University",
+    period: "2025 — 2026",
     description:
-      "Computer vision model for automated coronary vessel pattern analysis from angiogram frames. Contributing to data preprocessing, frame selection methodology, and deep learning model experimentation. Working toward clinical-grade reliability benchmarks in collaboration with cardiology specialists.",
-    tags: ["Computer Vision", "Medical Imaging", "Deep Learning", "Python"],
+      "First author. Proposed FreqLoRA-SAM, a parameter-efficient adaptation of MobileSAM for polyp segmentation in colonoscopy images. Introduced a dual-domain low-rank adapter combining spatial and frequency-aware LoRA branches with a learnable per-layer sigmoid gate — achieving Dice 0.927 on Kvasir-SEG with only 255K trainable parameters, outperforming methods trained on nearly twice the data. Cross-dataset evaluation on CVC-ClinicDB, CVC-ColonDB, and ETIS-LaribPolypDB demonstrates generalisation without retraining.",
+    tags: ["Medical Image Segmentation", "LoRA", "MobileSAM", "Computer Vision", "PyTorch", "FFT"],
     link: "",
-    status: "ongoing" as const,
+    status: "submitted" as const,
+  },
+  {
+    title: "Spectrally Motivated Dynamic Inference: An Empirical Study of Frequency Truncation in Early-Exit Neural Networks",
+    venue: "SRM Institute of Science and Technology",
+    period: "2025 — 2026",
+    description:
+      "Second author. Empirical study of inference-time low-pass filtering on CNN classification accuracy and its application to early-exit architectures. Demonstrated that moderate frequency truncation preserves discriminative capacity while random coefficient retention causes catastrophic degradation — motivating a spectrally-informed early-exit framework using teacher-student distillation and temperature scaling. Achieves 1.60× MAC reduction with under 3% accuracy drop on CIFAR-100.",
+    tags: ["Dynamic Inference", "Early-Exit Networks", "Spectral Analysis", "Knowledge Distillation", "CNNs"],
+    link: "",
+    status: "submitted" as const,
   },
 ]
 
 export const projects = [
+  // ── Tier 1: Original research ────────────────────────────
   {
-    name: "Voyder",
+    name: "FreqLoRA-SAM — Polyp Segmentation",
     description:
-      "AI-powered vendor SOA reconciliation platform for freight forwarding companies. Parses vendor statements from any format using Claude's document understanding, runs a multi-pass invoice matching engine, and generates reconciliation reports in the client's existing Excel format — in under 2 minutes instead of 2 hours.",
-    tags: ["Python", "FastAPI", "Next.js", "Claude API", "PostgreSQL", "pandas"],
+      "Novel dual-pathway LoRA adapter for MobileSAM. Each attention layer gets two parallel low-rank branches — one spatial, one frequency-domain (FFT) — with a learned gate balancing them. Dice 0.927 on Kvasir-SEG with 255K trainable params. Generalises to 3 unseen colonoscopy datasets without retraining. Full-stack app: Next.js point-click UI + FastAPI backend with TTA.",
+    tags: ["PyTorch", "MobileSAM", "LoRA", "Medical AI", "Computer Vision", "FastAPI", "Next.js"],
     github: "",
     live: "",
     featured: true,
+    status: "built",
+    year: "2026",
+  },
+ 
+  // ── Tier 2: Production systems ───────────────────────────
+  {
+    name: "Voyder — AI Vendor Reconciliation",
+    description:
+      "Turns a 2-hour manual accounts payable process into 2 minutes. Parses vendor statements from any format (PDF, Excel, scanned images) using AI, runs a 4-pass invoice matching engine, and outputs reports in the client's existing Excel format. Live client in freight forwarding.",
+    tags: ["FastAPI", "Next.js", "Claude API", "PostgreSQL", "Python"],
+    github: "",
+    live: "",
+    featured: true,
+    status: "building",
     year: "2026",
   },
   {
+    name: "DataRAG — Enterprise RAG System",
+    description:
+      "Production RAG backend built end-to-end. Hybrid retrieval: BM25 + Qdrant vector search merged and reranked by a cross-encoder. Provider-agnostic — embedder, LLM, and vector store swap via config. Streaming SSE responses, conversation history compression, PDF vision parsing, live financial chart generation, JWT auth with role-based access.",
+    tags: ["FastAPI", "Qdrant", "BM25", "Cross-Encoder", "PostgreSQL", "SSE", "Python"],
+    github: "",
+    live: "",
+    featured: true,
+    status: "built",
+    year: "2026",
+  },
+  {
+    name: "XCA Vessel Classification & Segmentation",
+    description:
+      "Two-model pipeline for coronary angiography analysis on the ARCADE dataset. YOLOv8n-seg identifies 25 anatomical vessel classes (SYNTAX scoring system). UNet++ with EfficientNet-B3 handles dense vessel segmentation. Full-stack diagnostic UI with annotated overlays and clinical descriptions per detected segment. Ongoing research.",
+    tags: ["YOLOv8", "UNet++", "Medical AI", "Computer Vision", "FastAPI", "Python"],
+    github: "",
+    live: "",
+    featured: true,
+    status: "built",
+    year: "2026",
+  },
+ 
+  // ── Tier 3: Full-stack AI ────────────────────────────────
+  {
     name: "PharmaSynapse",
     description:
-      "Full-stack agentic AI system for pharmaceutical intelligence. Built a Master–Worker multi-agent architecture that orchestrates domain-specific agents across regulatory, clinical, patent, market, and scientific data — producing structured, decision-ready insights.",
-    tags: ["Python", "Agentic AI", "Multi-Agent Systems", "FastAPI", "Next.js"],
+      "Agentic AI for pharma intelligence. NLP intent classifier routes queries to specialist agents — clinical trials, patents, market data, trade trends, web intelligence — running in parallel. Outputs are synthesised by Gemini into SWOT, executive summary, and Go/No-Go recommendations.",
+    tags: ["Python", "Agentic AI", "Multi-Agent", "Gemini API", "FastAPI", "Next.js"],
     github: "https://github.com/haryshwa05/pharmasynapse",
     live: "",
     featured: true,
+    status: "built",
     year: "2025",
   },
   {
-    name: "XCA Image Analysis",
+    name: "CleanBites AI — Food Label Analyzer",
     description:
-      "Deep learning model for X-ray coronary angiography analysis, in collaboration with SIMS Hospital Chennai. Focused on coronary vessel pattern recognition from angiogram frames — bridging clinical domain knowledge and computer vision.",
-    tags: ["Python", "Computer Vision", "Deep Learning", "Medical AI"],
-    github: "https://github.com/haryshwa05/xca-analysis",
-    live: "",
-    featured: true,
-    year: "2025",
-  },
-  {
-    name: "RAG Knowledge System",
-    description:
-      "Internal AI knowledge system built at Levarus Solutions using Retrieval-Augmented Generation. Replaced keyword search with LLM-powered semantic retrieval over company files and databases — production-deployed.",
-    tags: ["Python", "RAG", "LangChain", "Oracle DB", "FastAPI"],
+      "Scans food packaging against your personal health profile. Computes BMI, BMR, TDEE on signup. Sends label text to GPT-3.5 with a 20-category prompt — NOVA processing level, hidden sweeteners, allergen flags, gut health impact. Risk warnings adjust to your specific medical conditions.",
+    tags: ["Next.js", "Node.js", "MongoDB", "OpenAI API", "Full-Stack"],
     github: "",
     live: "",
     featured: false,
+    status: "built",
+    year: "2025",
+  },
+ 
+  // ── Tier 4: Range ────────────────────────────────────────
+  {
+    name: "Event Booking DApp",
+    description:
+      "Decentralised event ticketing on Ethereum. ERC-721 smart contract mints tickets as NFTs (metadata on IPFS), enforces a 10% organiser royalty on every resale at the contract level, and caps resale prices to prevent scalping. MetaMask frontend, Node/Express backend via Alchemy RPC.",
+    tags: ["Solidity", "ERC-721", "Ethereum", "IPFS", "ethers.js", "Next.js", "Hardhat"],
+    github: "",
+    live: "",
+    featured: false,
+    status: "built",
     year: "2025",
   },
 ]
@@ -128,8 +168,8 @@ export const projects = [
 export const skills = {
   languages: ["Python", "JavaScript", "TypeScript", "SQL"],
   frameworks: ["React", "Next.js", "FastAPI", "Node.js", "Express", "Angular", "Apache Camel"],
-  tools: ["Git", "REST APIs", "Oracle DB", "PostgreSQL", "Tailwind CSS", "pandas", "openpyxl", "pdfplumber"],
-  domains: ["Agentic AI Systems", "RAG Pipelines", "Computer Vision", "Document Intelligence", "Full-Stack Engineering", "Big Data"],
+  tools: ["Git", "REST APIs", "Oracle DB", "PostgreSQL", "Tailwind CSS", "pandas", "openpyxl", "pdfplumber", "PyTorch"],
+  domains: ["Agentic AI Systems", "RAG Pipelines", "Computer Vision", "Medical AI", "Document Intelligence", "Full-Stack Engineering"],
 }
 
 export const education = [
@@ -141,48 +181,13 @@ export const education = [
   },
 ]
 
-// ============================================================
-// BLOG — Add posts here as you write them
-// These should target topics your future clients search for
-// ============================================================
-
 export const blogPosts = [
-  // Example structure — fill in as you publish:
   // {
   //   title: "How we cut vendor reconciliation time from 2 hours to 2 minutes using Claude API",
   //   slug: "voyder-reconciliation-claude-api",
   //   date: "2026-04-15",
-  //   summary: "A technical breakdown of how we built the AI extraction layer for Voyder — parsing unstructured vendor statements from PDFs, Excel, and scanned images.",
+  //   summary: "A technical breakdown of how we built the AI extraction layer for Voyder.",
   //   tags: ["AI", "Document Intelligence", "Freight Tech", "Claude API"],
   //   featured: true,
   // },
 ]
-
-// ============================================================
-// WHAT TO ADD NEXT (remove this section once done)
-// ============================================================
-
-// 1. TESTIMONIALS — even one quote from your chess platform client
-//    carries enormous weight. Add a testimonials[] array here.
-//
-// 2. CASE STUDIES — for the chess platform, write 3 paragraphs:
-//    - The problem the client had
-//    - What you built and how
-//    - The measurable result
-//    This is what converts visitors into clients far more than projects do.
-//
-// 3. BLOG POSTS — start with these titles (they target real search intent):
-//    - "How RAG actually works in production" (technical credibility)
-//    - "What I learned building AI for freight forwarding" (niche authority)
-//    - "Automating vendor reconciliation with AI" (client-facing SEO)
-//    Write one per month minimum. This is your long game for inbound.
-//
-// 4. AVAILABILITY/SERVICES SECTION — be explicit about what you offer:
-//    - AI workflow automation for businesses
-//    - Custom RAG systems
-//    - Full-stack AI applications
-//    Vague = no inquiries. Specific = real leads.
-//
-// 5. A CONTACT FORM that actually works — email link alone loses people.
-//    Add a simple form with: Name, Company, What they need, Budget range.
-//    The budget field alone filters out time-wasters immediately.

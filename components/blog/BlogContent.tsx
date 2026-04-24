@@ -20,6 +20,7 @@ type Block =
   | { type: "hr" }
   | { type: "blockquote"; text: string }
   | { type: "codeblock"; lang: string; code: string }
+  | { type: "table"; headers: string[]; rows: string[][] }
   | { type: "ul"; items: string[] }
   | { type: "ol"; items: string[] }
   | { type: "p"; text: string }
@@ -43,13 +44,26 @@ function parseTableProps(attrStr: string): {
 } {
   const labelA = (attrStr.match(/labelA=["']([^"']*)["']/) ?? [])[1] ?? "";
   const labelB = (attrStr.match(/labelB=["']([^"']*)["']/) ?? [])[1] ?? "";
-  const title = (attrStr.match(/title=["']([^"']*)["']/) ?? [])[1] ?? "";
   const rowMatches = attrStr.matchAll(/\{\s*label:\s*["']([^"']*)["'],\s*a:\s*["']([^"']*)["'],\s*b:\s*["']([^"']*)["']\s*\}/g);
   const rows: { label: string; a: string; b: string }[] = [];
   for (const m of rowMatches) {
     rows.push({ label: m[1], a: m[2], b: m[3] });
   }
   return { labelA, labelB, rows };
+}
+
+function splitMarkdownTableRow(line: string): string[] {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function isMarkdownTableSeparator(line: string): boolean {
+  const cells = splitMarkdownTableRow(line);
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
 }
 
 function tokenizeBlocks(raw: string): Block[] {
@@ -103,6 +117,26 @@ function tokenizeBlocks(raw: string): Block[] {
       continue;
     }
 
+    // Markdown table
+    if (
+      line.trim().startsWith("|") &&
+      i + 1 < lines.length &&
+      lines[i + 1].trim().startsWith("|") &&
+      isMarkdownTableSeparator(lines[i + 1])
+    ) {
+      const headers = splitMarkdownTableRow(line);
+      i += 2;
+
+      const rows: string[][] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        rows.push(splitMarkdownTableRow(lines[i]));
+        i++;
+      }
+
+      blocks.push({ type: "table", headers, rows });
+      continue;
+    }
+
     // Headings
     if (line.startsWith("## ")) { blocks.push({ type: "h2", text: line.slice(3) }); i++; continue; }
     if (line.startsWith("### ")) { blocks.push({ type: "h3", text: line.slice(4) }); i++; continue; }
@@ -138,7 +172,7 @@ function tokenizeBlocks(raw: string): Block[] {
 
     // Paragraph — collect until blank line
     const paraLines: string[] = [];
-    while (i < lines.length && lines[i].trim() !== "" && !lines[i].startsWith("#") && !lines[i].startsWith("```") && !lines[i].startsWith(">") && !lines[i].match(/^[-*] /) && !lines[i].match(/^\d+\. /) && !lines[i].startsWith("<")) {
+    while (i < lines.length && lines[i].trim() !== "" && !lines[i].startsWith("#") && !lines[i].startsWith("```") && !lines[i].startsWith(">") && !lines[i].match(/^[-*] /) && !lines[i].match(/^\d+\. /) && !lines[i].startsWith("<") && !lines[i].trim().startsWith("|")) {
       paraLines.push(lines[i]);
       i++;
     }
@@ -201,6 +235,156 @@ function renderInline(text: string): React.ReactNode {
   return parts.length === 1 ? parts[0] : <>{parts}</>;
 }
 
+type CodeTokenType =
+  | "plain"
+  | "comment"
+  | "string"
+  | "keyword"
+  | "number"
+  | "function"
+  | "decorator"
+  | "operator";
+
+interface CodeToken {
+  type: CodeTokenType;
+  value: string;
+}
+
+function tokenizeCode(code: string, lang: string): CodeToken[] {
+  const supportedLangs = new Set(["python", "py", "javascript", "js", "typescript", "ts", "tsx", "jsx"]);
+  const language = lang.toLowerCase();
+
+  if (!supportedLangs.has(language)) {
+    return [{ type: "plain", value: code }];
+  }
+
+  const keywordSet = new Set(
+    language === "python"
+      ? ["False", "None", "True", "and", "as", "break", "class", "continue", "def", "elif", "else", "except", "finally", "for", "from", "if", "import", "in", "is", "lambda", "not", "or", "pass", "return", "try", "while", "with", "yield"]
+      : ["async", "await", "break", "case", "catch", "class", "const", "continue", "default", "else", "export", "extends", "false", "finally", "for", "from", "function", "if", "import", "in", "let", "new", "null", "return", "static", "switch", "throw", "true", "try", "typeof", "var", "while"]
+  );
+
+  const tokens: CodeToken[] = [];
+  let i = 0;
+
+  while (i < code.length) {
+    const ch = code[i];
+
+    if (ch === "#" && (language === "python" || language === "py")) {
+      let j = i;
+      while (j < code.length && code[j] !== "\n") j++;
+      tokens.push({ type: "comment", value: code.slice(i, j) });
+      i = j;
+      continue;
+    }
+
+    if (ch === "/" && code[i + 1] === "/") {
+      let j = i;
+      while (j < code.length && code[j] !== "\n") j++;
+      tokens.push({ type: "comment", value: code.slice(i, j) });
+      i = j;
+      continue;
+    }
+
+    if (ch === "'" || ch === '"' || ch === "`") {
+      const quote = ch;
+      let j = i + 1;
+      while (j < code.length) {
+        if (code[j] === "\\" && j + 1 < code.length) {
+          j += 2;
+          continue;
+        }
+        if (code[j] === quote) {
+          j++;
+          break;
+        }
+        j++;
+      }
+      tokens.push({ type: "string", value: code.slice(i, j) });
+      i = j;
+      continue;
+    }
+
+    if ((language === "python" || language === "py") && ch === "@") {
+      let j = i + 1;
+      while (j < code.length && /[\w.]/.test(code[j])) j++;
+      tokens.push({ type: "decorator", value: code.slice(i, j) });
+      i = j;
+      continue;
+    }
+
+    if (/\d/.test(ch)) {
+      let j = i + 1;
+      while (j < code.length && /[\d._]/.test(code[j])) j++;
+      tokens.push({ type: "number", value: code.slice(i, j) });
+      i = j;
+      continue;
+    }
+
+    if (/[A-Za-z_]/.test(ch)) {
+      let j = i + 1;
+      while (j < code.length && /[\w]/.test(code[j])) j++;
+      const word = code.slice(i, j);
+
+      let k = j;
+      while (k < code.length && /\s/.test(code[k]) && code[k] !== "\n") k++;
+      const isFunction = code[k] === "(";
+
+      if (keywordSet.has(word)) {
+        tokens.push({ type: "keyword", value: word });
+      } else if (isFunction) {
+        tokens.push({ type: "function", value: word });
+      } else {
+        tokens.push({ type: "plain", value: word });
+      }
+      i = j;
+      continue;
+    }
+
+    if (/[=+\-*/<>!%|&^~.:]/.test(ch)) {
+      let j = i + 1;
+      while (j < code.length && /[=+\-*/<>!%|&^~.:]/.test(code[j])) j++;
+      tokens.push({ type: "operator", value: code.slice(i, j) });
+      i = j;
+      continue;
+    }
+
+    tokens.push({ type: "plain", value: ch });
+    i++;
+  }
+
+  return tokens;
+}
+
+function getCodeTokenColor(type: CodeTokenType): string {
+  switch (type) {
+    case "comment":
+      return "#7a6f61";
+    case "string":
+      return "#0f766e";
+    case "keyword":
+      return "#b42318";
+    case "number":
+      return "#7c3aed";
+    case "function":
+      return "#0057ff";
+    case "decorator":
+      return "#c2410c";
+    case "operator":
+      return "#111827";
+    default:
+      return "var(--text)";
+  }
+}
+
+function renderCode(code: string, lang: string): React.ReactNode {
+  return tokenizeCode(code, lang).map((token, idx) => (
+    <span key={idx} style={{ color: getCodeTokenColor(token.type) }}>
+      {token.value}
+    </span>
+  ));
+}
+
 function renderBlock(block: Block, idx: number): React.ReactNode {
   switch (block.type) {
     case "h1":
@@ -226,9 +410,9 @@ function renderBlock(block: Block, idx: number): React.ReactNode {
           fontStyle: "italic",
           color: "var(--text)",
           lineHeight: 1.25,
-          marginTop: "2.5rem",
-          marginBottom: "0.875rem",
-          paddingTop: "1rem",
+          marginTop: "0.75rem",
+          marginBottom: "0.75rem",
+          paddingTop: "0.45rem",
           borderTop: "1px solid var(--border)",
         }}>
           {renderInline(block.text)}
@@ -273,16 +457,20 @@ function renderBlock(block: Block, idx: number): React.ReactNode {
     case "codeblock":
       return (
         <pre key={idx} style={{
-          background: "var(--code-bg)",
-          border: "1px solid var(--border)",
+          background: "var(--surface-alt)",
+          border: "2px solid var(--line)",
           borderRadius: "8px",
           overflowX: "auto",
-          padding: "1.25rem",
+          overflowY: "hidden",
+          padding: "1rem 1.1rem",
           margin: "1.5rem 0",
           fontFamily: "var(--font-dm-mono)",
           fontSize: "0.875rem",
           lineHeight: 1.7,
-          color: "var(--text-muted)",
+          color: "var(--text)",
+          boxSizing: "border-box",
+          maxWidth: "100%",
+          boxShadow: "var(--shadow)",
         }}>
           {block.lang && (
             <div style={{
@@ -291,16 +479,83 @@ function renderBlock(block: Block, idx: number): React.ReactNode {
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              color: "var(--text-dim)",
+              color: "var(--text-soft)",
               marginBottom: "0.75rem",
-              paddingBottom: "0.75rem",
-              borderBottom: "1px solid var(--border)",
+              paddingBottom: "0.65rem",
+              borderBottom: "2px solid rgba(23, 23, 23, 0.12)",
             }}>
               {block.lang}
             </div>
           )}
-          <code style={{ color: "var(--text-muted)" }}>{block.code}</code>
+          <code style={{
+            display: "block",
+            width: "max-content",
+            minWidth: "100%",
+            whiteSpace: "pre",
+            paddingRight: "1rem",
+          }}>
+            {renderCode(block.code, block.lang)}
+          </code>
         </pre>
+      );
+
+    case "table":
+      return (
+        <div key={idx} style={{ margin: "1.5rem 0", overflowX: "auto" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              border: "2px solid var(--line)",
+              background: "var(--surface)",
+              minWidth: "420px",
+            }}
+          >
+            <thead>
+              <tr style={{ background: "var(--surface-alt)" }}>
+                {block.headers.map((header, headerIdx) => (
+                  <th
+                    key={headerIdx}
+                    style={{
+                      padding: "0.75rem 0.9rem",
+                      textAlign: "left",
+                      fontFamily: "var(--font-syne)",
+                      fontSize: "0.7rem",
+                      fontWeight: 800,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--text)",
+                      borderBottom: "2px solid var(--line)",
+                    }}
+                  >
+                    {renderInline(header)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {block.rows.map((row, rowIdx) => (
+                <tr key={rowIdx}>
+                  {row.map((cell, cellIdx) => (
+                    <td
+                      key={cellIdx}
+                      style={{
+                        padding: "0.75rem 0.9rem",
+                        fontFamily: "var(--font-dm-mono)",
+                        fontSize: "0.85rem",
+                        lineHeight: 1.7,
+                        color: "var(--text-soft)",
+                        borderTop: "2px solid var(--line)",
+                      }}
+                    >
+                      {renderInline(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       );
 
     case "ul":

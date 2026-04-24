@@ -7,7 +7,7 @@ export default function Divider({ label }: Props) {
     return (
       <div
         style={{
-          margin: "3rem 0",
+          margin: "1rem 0 0.6rem",
           height: "1px",
           background: "linear-gradient(90deg, transparent, var(--border-bright), transparent)",
         }}
@@ -18,7 +18,7 @@ export default function Divider({ label }: Props) {
   return (
     <div
       style={{
-        margin: "3rem 0",
+        margin: "1rem 0 0.6rem",
         display: "flex",
         alignItems: "center",
         gap: "1rem",

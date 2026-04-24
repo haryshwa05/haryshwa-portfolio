@@ -13,6 +13,8 @@ export async function generateStaticParams() {
   return getAllBlogSlugs().map((slug) => ({ slug }));
 }
 
+export const dynamicParams = false;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getBlogBySlug(slug);
@@ -20,7 +22,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: post.frontmatter.title,
     description: post.frontmatter.description,
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+    },
     openGraph: {
+      type: "article",
+      url: `/blog/${post.slug}`,
+      title: post.frontmatter.title,
+      description: post.frontmatter.description,
+      publishedTime: post.frontmatter.date,
+      tags: [post.frontmatter.tag],
+    },
+    twitter: {
+      card: "summary_large_image",
       title: post.frontmatter.title,
       description: post.frontmatter.description,
     },

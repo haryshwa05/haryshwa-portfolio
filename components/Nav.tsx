@@ -21,10 +21,17 @@ const navLinks: NavItem[] = [
   { label: "Contact",  anchor: "contact"  },
 ];
 
+const PENDING_SCROLL_KEY = "pending-section-scroll";
+
+function easeOutCubic(t: number) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
 export default function Nav() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { theme, toggle } = useTheme();
+  const { theme, mounted, toggle } = useTheme();
   const navRef  = useRef<HTMLElement>(null);
+  const scrollFrameRef = useRef<number | null>(null);
   const [navHeight, setNavHeight] = useState(80);
   const pathname = usePathname();
   const router   = useRouter();
@@ -43,27 +50,82 @@ export default function Nav() {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    return () => {
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+      }
+    };
+  }, []);
+
   const closeMenu = () => setMobileOpen(false);
+
+  const scrollToId = useCallback((id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return false;
+
+    if (scrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(scrollFrameRef.current);
+      scrollFrameRef.current = null;
+    }
+
+    const offset = navRef.current?.offsetHeight ?? 80;
+    const target = Math.max(0, el.getBoundingClientRect().top + window.scrollY - offset - 16);
+    const start = window.scrollY;
+    const distance = target - start;
+
+    if (Math.abs(distance) < 2) return true;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      window.scrollTo({ top: target });
+      return true;
+    }
+
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+
+    const duration = Math.min(1500, Math.max(900, Math.abs(distance) * 0.7));
+    const startedAt = performance.now();
+
+    const step = (now: number) => {
+      const elapsed = Math.min(1, (now - startedAt) / duration);
+      window.scrollTo(0, start + distance * easeOutCubic(elapsed));
+      if (elapsed < 1) {
+        scrollFrameRef.current = window.requestAnimationFrame(step);
+      } else {
+        root.style.scrollBehavior = previousScrollBehavior;
+        scrollFrameRef.current = null;
+      }
+    };
+
+    scrollFrameRef.current = window.requestAnimationFrame(step);
+    return true;
+  }, []);
+
+  useEffect(() => {
+    if (pathname !== "/") return;
+
+    const pending = window.sessionStorage.getItem(PENDING_SCROLL_KEY);
+    if (!pending) return;
+
+    window.sessionStorage.removeItem(PENDING_SCROLL_KEY);
+    if (pending !== "hero") window.scrollTo(0, 0);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => scrollToId(pending));
+    });
+  }, [pathname, scrollToId]);
 
   const scrollToSection = useCallback((id: string) => {
     closeMenu();
 
-    const doScroll = () => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const offset = navRef.current?.offsetHeight ?? 80;
-      const top = el.getBoundingClientRect().top + window.scrollY - offset - 16;
-      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-    };
-
     if (pathname !== "/") {
-      // Navigate home first, then scroll after the page loads
-      router.push("/");
-      setTimeout(doScroll, 400);
+      window.sessionStorage.setItem(PENDING_SCROLL_KEY, id);
+      router.push("/", { scroll: false });
     } else {
-      doScroll();
+      scrollToId(id);
     }
-  }, [pathname, router]);
+  }, [pathname, router, scrollToId]);
 
   const renderLink = (link: NavItem, className: string) => {
     if (link.anchor) {
@@ -83,6 +145,8 @@ export default function Nav() {
       </Link>
     );
   };
+
+  const themeIcon = mounted && theme === "dark" ? <Sun size={15} /> : <Moon size={15} />;
 
   return (
     <>
@@ -175,7 +239,7 @@ export default function Nav() {
                   (e.currentTarget as HTMLElement).style.boxShadow = "2px 2px 0 var(--line)";
                 }}
               >
-                {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+                {themeIcon}
               </button>
             </div>
 
@@ -193,7 +257,7 @@ export default function Nav() {
                   display: "flex",
                 }}
               >
-                {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+                {themeIcon}
               </button>
               <button
                 onClick={() => setMobileOpen((o) => !o)}
@@ -263,16 +327,6 @@ export default function Nav() {
         )}
       </AnimatePresence>
 
-      <style>{`
-        @media (min-width: 768px) {
-          .nav-desktop { display: flex !important; }
-          .nav-mobile  { display: none !important; }
-        }
-        @media (max-width: 767px) {
-          .nav-desktop { display: none !important; }
-          .nav-mobile  { display: flex !important; }
-        }
-      `}</style>
     </>
   );
 }

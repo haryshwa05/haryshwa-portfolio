@@ -1,5 +1,5 @@
 ---
-title: "Fine-Tuning a Large Vision Model Without Touching 95% of Its Weights"
+title: "Fine-Tuning a Large Vision Model Without Touching Most of Its Weights"
 date: "2026-04-22"
 description: "How LoRA works, why it exists, and how I used it to adapt SAM for medical image segmentation."
 tag: "Deep Learning"
@@ -10,14 +10,13 @@ status: "published"
 
 Two things make fine-tuning large models painful. The first is compute — storing gradients for tens of millions of parameters is expensive. The second is: the more you update, the more you risk losing what the model already knew. I ran into both when working on SAM for medical image segmentation. That's what pushed me to look at parameter-efficient fine-tuning, and specifically at LoRA — a method that lets you adapt a large pretrained model by only training a small fraction of it, while keeping everything else exactly as it was.
 
-This post walks through what LoRA is, how it works, and how I used it — the concept, the math, and the implementation choices.
+This post walks through what LoRA is, how it works, and how I used it — the concept, the math, and the implementation choices, including the ones where the reasoning wasn't obvious to me at first.
 
 ---
 
 ## Why full fine-tuning is often the wrong move
 
-
-
+SAM — Segment Anything Model — is a foundation model released by Meta in 2023. Give it an image and a prompt (a click, a box, or a rough mask) and it segments whatever you're pointing at. It was trained on over a billion segmentation masks across natural images, which gives it a strong general understanding of visual boundaries and object structure. That generality is exactly what makes it useful as a starting point — and exactly what makes naive fine-tuning on a small medical dataset risky.
 
 When you have a pretrained model and want to adapt it to a new task, the instinct is to fine-tune everything. Update all the weights on your new data, let the model adjust.
 
@@ -96,7 +95,23 @@ In my setup I injected into *all* linear layers in the image encoder, not just t
 
 The tradeoff is more trainable parameters, but it's still a small fraction of the total. If memory is very tight, attention-only works as a starting point — but if you have the room, covering all linear layers gives the adaptation more surface area to work with.
 
-Here's the wrapper:
+---
+
+## SAM's architecture — and applying LoRA to it
+
+SAM has three main components. The **image encoder** is a Vision Transformer (ViT) — a model architecture that processes images by splitting them into fixed patches and running attention across those patches, similar to how language transformers process words. It's the heavyweight part of the model: most of the parameters live here, most of the visual understanding happens here, and this is where the domain-specific knowledge needs to change.
+
+The **prompt encoder** takes the user's input — a click point, a bounding box, or a mask hint — and converts it into embeddings (numerical representations the model can work with) that tell the decoder where to focus. It's relatively lightweight and doesn't need much adaptation for a new domain; the prompt format stays the same.
+
+The **mask decoder** is a lightweight transformer that takes the image embedding and the prompt embedding, runs cross-attention (a mechanism that lets the prompt "ask questions" of the image features — figuring out which parts of the image the prompt is pointing to) between them, and produces the final segmentation mask. The design philosophy of SAM is that the image encoder does most of the heavy lifting, and the decoder's job is to translate that embedding into a mask given the prompt.
+
+The mismatch with medical images is deeper than just a distribution shift. Natural images have objects with clear semantic identity — a dog is a dog, a chair is a chair — and SAM's encoder learned to find those objects based on high-contrast boundaries, familiar textures, and recognisable shapes. Colonoscopy frames don't have any of that. A polyp is a subtle elevation of mucosa against similar-looking surrounding tissue. Boundaries are soft. Colour variation is minimal. What matters is local texture microstructure and faint gradient transitions that wouldn't register as significant in a natural-image context.
+
+SAM's encoder isn't wrong about what it learned. It just learned to care about the wrong things for this task. LoRA gives it a way to relearn those weights without discarding the underlying structural knowledge that's still useful — the understanding of spatial relationships, boundary detection, feature hierarchy — while teaching it to respond differently to the specific visual patterns that matter in colonoscopy.
+
+This is where LoRA goes in. The image encoder has hundreds of linear projections across its transformer blocks — query, key, value, and output projections in each attention head, plus two linear layers in each MLP block. Freeze the whole model, inject LoRA adapters into all of those, and only those adapters train.
+
+Here's the wrapper that replaces each linear layer:
 
 ```python
 class LoRALinear(nn.Module):
@@ -140,15 +155,7 @@ def inject_lora(model, rank=4, alpha=1.0, dropout=0.05):
         setattr(parent, child_name, LoRALinear(child, rank, alpha, dropout))
 ```
 
-After this, only the LoRA matrices have `requires_grad=True`. Everything else is frozen.
-
----
-
-## Applying this to SAM
-
-SAM (Segment Anything Model) takes an image and a prompt — a point, a box — and returns a segmentation mask. It was trained on natural images and works well on them. On colonoscopy frames it doesn't, because the domain is very different: polyps blend into surrounding tissue, boundaries are faint and irregular, and the whole scene is red-pink mucosa with subtle local variation.
-
-The model isn't missing a fundamental capability. It just needs to learn what to pay attention to in this specific context. That's a good fit for LoRA.
+Applied to SAM:
 
 ```python
 from mobile_sam import sam_model_registry
@@ -159,7 +166,7 @@ sam = sam_model_registry["vit_t"](checkpoint="mobile_sam.pt")
 for p in sam.parameters():
     p.requires_grad = False
 
-# Inject LoRA into the image encoder only
+# Inject LoRA into the image encoder
 inject_lora(sam.image_encoder, rank=4, alpha=1.0, dropout=0.05)
 
 trainable = sum(p.numel() for p in sam.parameters() if p.requires_grad)
@@ -169,24 +176,6 @@ print(f"Trainable: {trainable:,} / {total:,} ({100*trainable/total:.1f}%)")
 ```
 
 4.4% of parameters are trainable. The rest of the model is untouched.
-
----
-
-## SAM's architecture — and what it gets wrong in medicine
-
-Understanding where LoRA plugs in requires understanding what SAM actually is under the hood.
-
-SAM has three main components. The **image encoder** is a Vision Transformer (ViT) — a model architecture that processes images by splitting them into fixed patches and running attention across those patches, similar to how language transformers process words. It's the heavyweight part of the model: most of the parameters live here, most of the visual understanding happens here, and this is where the domain-specific knowledge needs to change.
-
-The **prompt encoder** takes the user's input — a click point, a bounding box, or a mask hint — and converts it into embeddings (numerical representations the model can work with) that tell the decoder where to focus. It's relatively lightweight and doesn't need much adaptation for a new domain; the prompt format stays the same.
-
-The **mask decoder** is a lightweight transformer that takes the image embedding and the prompt embedding, runs cross-attention (a mechanism that lets the prompt "ask questions" of the image features — figuring out which parts of the image the prompt is pointing to) between them, and produces the final segmentation mask. It's also relatively lightweight — the design philosophy of SAM is that the image encoder does most of the heavy lifting, and the decoder's job is to translate that embedding into a mask given the prompt.
-
-This architecture is important for LoRA because it tells you where to focus. The image encoder is the part that learned visual priors from natural images. It's the part that doesn't know what colonoscopy looks like. And it's the part with hundreds of linear projections in its transformer blocks — query, key, value, output projections in each attention head, plus two linear layers in each MLP block. Those are exactly where LoRA goes.
-
-The mismatch with medical images is deeper than just a distribution shift. Natural images have objects with clear semantic identity — a dog is a dog, a chair is a chair — and SAM's encoder learned to find those objects based on high-contrast boundaries, familiar textures, and recognisable shapes. Colonoscopy frames don't have any of that. A polyp is a subtle elevation of mucosa against similar-looking surrounding tissue. Boundaries are soft. Colour variation is minimal. What matters is local texture microstructure and faint gradient transitions that wouldn't register as significant in a natural-image context.
-
-SAM's encoder isn't wrong about what it learned. It just learned to care about the wrong things for this task. LoRA gives it a way to relearn those weights without discarding the underlying structural knowledge that's still useful — the understanding of spatial relationships, boundary detection, feature hierarchy — while teaching it to respond differently to the specific visual patterns that matter in colonoscopy.
 
 ---
 
@@ -258,8 +247,8 @@ LoRA changes the practical side of working with large pretrained models in a few
 
 ## My thoughts
 
-What I found most useful about going through this is that LoRA forces you to think clearly about what fine-tuning is actually doing. The reason a small low-rank update can be enough is that most adaptation isn't random — it's a reweighting of what already exists. The model already has features for edges, gradients, boundaries, and texture. What it needs to learn is how to weight those features differently in a new domain. That's a much smaller change than it initially sounds.
+The thing I keep coming back to is that LoRA reveals something about what fine-tuning is actually doing. The fact that a low-rank update is enough tells you the adaptation you need is genuinely low-dimensional — you're not rewriting the model's understanding of vision, you're shifting which parts of it get activated and how strongly. That's a much smaller operation than it sounds, and it's why you don't need to update everything to get there.
 
-For medical AI specifically, this matters in practice. Labeled data is scarce, compute is limited, and the range of clinical tasks you might need to cover is wide. Being able to adapt a strong general model efficiently — and keep that adaptation small and composable — matters more than having the most powerful fine-tuning approach on paper.
+For medical AI this matters practically. Labeled data is expensive to collect, compute budgets are limited, and the range of clinical tasks you might want to cover is wide. LoRA makes it feasible to take one strong general model and adapt it to multiple specific tasks efficiently, without each adaptation being a separate large training job.
 
 I'll keep iterating on this — the next post covers what happened when I took LoRA further and added a frequency-domain branch on top of it.

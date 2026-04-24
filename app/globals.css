@@ -6,7 +6,7 @@
   --surface: #fffdf7;
   --surface-alt: #ffecc4;
   --text: #171717;
-  --text-soft: #3f3a32;
+  --text-soft: #2f2a24;
   --line: #171717;
   --accent: #ff4d00;
   --accent-2: #0057ff;
@@ -24,7 +24,7 @@ html.dark {
   --surface: #191919;
   --surface-alt: #282828;
   --text: #f0f0f0;
-  --text-soft: #7a7a7a;
+  --text-soft: #b8b8b8;
   --line: #d0d0d0;
   --accent: #ff4d00;
   --accent-2: #4d88ff;
@@ -50,6 +50,7 @@ body {
 }
 
 html {
+  font-size: 16.5px;
   scroll-behavior: smooth;
   scroll-padding-top: 88px; /* offset for sticky nav */
 }
@@ -225,6 +226,26 @@ html.dark .neo-card {
   color: var(--text-inverse);
 }
 
+@media (min-width: 768px) {
+  .nav-desktop {
+    display: flex !important;
+  }
+
+  .nav-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .nav-desktop {
+    display: none !important;
+  }
+
+  .nav-mobile {
+    display: flex !important;
+  }
+}
+
 /* â”€â”€ Prose â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .prose {
@@ -290,6 +311,8 @@ html.dark .neo-card {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .bg-orb-1 {

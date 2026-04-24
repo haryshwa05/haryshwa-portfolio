@@ -7,6 +7,9 @@ import SectionLabel from "@/components/SectionLabel";
 export const metadata: Metadata = {
   title: "Writing",
   description: `Essays, research notes, and technical writing by ${personal.name}`,
+  alternates: {
+    canonical: "/blog",
+  },
 };
 
 export default function BlogIndexPage() {
