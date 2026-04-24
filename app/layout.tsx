@@ -33,10 +33,15 @@ export const metadata: Metadata = {
     template: `%s - ${personal.name}`,
   },
   description: personal.tagline,
-  metadataBase: new URL("https://haryshwa.com"),
+  metadataBase: new URL("https://www.haryshwa.com"),
+  icons: {
+    icon: "/haryshwa.ico",
+    shortcut: "/haryshwa.ico",
+    apple: "/haryshwa.ico",
+  },
   openGraph: {
     type: "website",
-    url: "https://haryshwa.com",
+    url: "https://www.haryshwa.com",
     siteName: personal.name,
     title: `${personal.name} - ${personal.title}`,
     description: personal.tagline,

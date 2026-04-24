@@ -1,5 +1,5 @@
 ---
-title: "Fine-Tuning a Large Vision Model Without Touching Most of Its Weights"
+title: "Fine-Tuning a Large Vision Model Without Touching 95% of Its Weights"
 date: "2026-04-22"
 description: "How LoRA works, why it exists, and how I used it to adapt SAM for medical image segmentation."
 tag: "Deep Learning"
@@ -10,7 +10,7 @@ status: "published"
 
 Two things make fine-tuning large models painful. The first is compute — storing gradients for tens of millions of parameters is expensive. The second is: the more you update, the more you risk losing what the model already knew. I ran into both when working on SAM for medical image segmentation. That's what pushed me to look at parameter-efficient fine-tuning, and specifically at LoRA — a method that lets you adapt a large pretrained model by only training a small fraction of it, while keeping everything else exactly as it was.
 
-This post walks through what LoRA is, how it works, and how I used it — the concept, the math, and the implementation choices, including the ones where the reasoning wasn't obvious to me at first.
+This post walks through what LoRA is, how it works, and how I used it — the concept, the math, and the implementation choices.
 
 ---
 
@@ -247,8 +247,8 @@ LoRA changes the practical side of working with large pretrained models in a few
 
 ## My thoughts
 
-The thing I keep coming back to is that LoRA reveals something about what fine-tuning is actually doing. The fact that a low-rank update is enough tells you the adaptation you need is genuinely low-dimensional — you're not rewriting the model's understanding of vision, you're shifting which parts of it get activated and how strongly. That's a much smaller operation than it sounds, and it's why you don't need to update everything to get there.
+What I found most useful about going through this is that LoRA forces you to think clearly about what fine-tuning is actually doing. The reason a small low-rank update can be enough is that most adaptation isn't arbitrary — it's a reweighting of what already exists. The model already has features for edges, gradients, boundaries, texture. What it needs to learn is how to weight those features differently in a new domain. That's a much smaller change than it initially sounds.
 
-For medical AI this matters practically. Labeled data is expensive to collect, compute budgets are limited, and the range of clinical tasks you might want to cover is wide. LoRA makes it feasible to take one strong general model and adapt it to multiple specific tasks efficiently, without each adaptation being a separate large training job.
+For medical AI specifically, this is practically important. Labeled data is scarce, compute is limited, and the model variety you need across different clinical tasks is high. Being able to adapt a strong general model efficiently — and keep the adaptation small and composable — matters more than having the theoretically most powerful fine-tuning approach.
 
 I'll keep iterating on this — the next post covers what happened when I took LoRA further and added a frequency-domain branch on top of it.

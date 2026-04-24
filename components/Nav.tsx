@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -186,19 +187,20 @@ export default function Nav() {
             >
               <span
                 style={{
-                  width: "30px",
-                  height: "30px",
-                  background: "var(--accent)",
-                  color: "var(--text-inverse)",
-                  border: "2px solid var(--line)",
-                  display: "grid",
-                  placeItems: "center",
-                  fontFamily: "var(--font-syne)",
-                  fontWeight: 800,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   flexShrink: 0,
                 }}
               >
-                H
+                <Image
+                  src="/haryshwa.ico"
+                  alt={`${personal.name} logo`}
+                  width={28}
+                  height={28}
+                  style={{ display: "block", width: "28px", height: "28px" }}
+                  priority
+                />
               </span>
               <span
                 style={{
