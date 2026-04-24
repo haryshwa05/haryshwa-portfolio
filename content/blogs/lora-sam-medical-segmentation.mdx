@@ -8,7 +8,12 @@ layout: "technical"
 status: "published"
 ---
 
-Two things make fine-tuning large models painful. The first is compute — storing gradients for tens of millions of parameters is expensive. The second is: the more you update, the more you risk losing what the model already knew. I ran into both when working on SAM for medical image segmentation. That's what pushed me to look at parameter-efficient fine-tuning, and specifically at LoRA — a method that lets you adapt a large pretrained model by only training a small fraction of it, while keeping everything else exactly as it was.
+Fine-tuning large models breaks in two ways.
+
+First, compute — updating tens of millions of parameters is expensive and often impractical.  
+Second, stability — the more you update, the more you risk overwriting what the model already knows.
+
+I ran into both while working with SAM for medical image segmentation. That’s what pushed me toward parameter-efficient fine-tuning — specifically LoRA — a method that adapts a pretrained model by training only a small fraction of its weights, while leaving the rest untouched.
 
 This post walks through what LoRA is, how it works, and how I used it — the concept, the math, and the implementation choices.
 
